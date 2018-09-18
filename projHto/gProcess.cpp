@@ -3,19 +3,42 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <iostream>
-#include<sys/time.h>
-#include<sys/resource.h>
-#include<string.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <string.h>
 #include <stdlib.h>
 #include <cstdlib>
+#include <curses.h>
+#include <math.h> 
 
 #include <fstream>
 #include <sstream>
 using namespace std;
 
+#include <termio.h>
+#include <unistd.h>
+
+//the following are UBUNTU/LINUX ONLY terminal color codes.
+#define RESET   "\033[0m"
+#define BLACK   "\033[30m"      /* Black */
+#define RED     "\033[31m"      /* Red */
+#define GREEN   "\033[32m"      /* Green */
+#define YELLOW  "\033[33m"      /* Yellow */
+#define BLUE    "\033[34m"      /* Blue */
+#define MAGENTA "\033[35m"      /* Magenta */
+#define CYAN    "\033[36m"      /* Cyan */
+#define WHITE   "\033[37m"      /* White */
+#define BOLDBLACK   "\033[1m\033[30m"      /* Bold Black */
+#define BOLDRED     "\033[1m\033[31m"      /* Bold Red */
+#define BOLDGREEN   "\033[1m\033[32m"      /* Bold Green */
+#define BOLDYELLOW  "\033[1m\033[33m"      /* Bold Yellow */
+#define BOLDBLUE    "\033[1m\033[34m"      /* Bold Blue */
+#define BOLDMAGENTA "\033[1m\033[35m"      /* Bold Magenta */
+#define BOLDCYAN    "\033[1m\033[36m"      /* Bold Cyan */
+#define BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
 
 //listar processos ordenados pelo resident set size, the non-swapped physical memory that
-string listPCommand = "ps -eo user,comm,pid,psr,pcpu,pri,ni,cputime,time --sort -rss | head -20";
+string listPCommand = "ps -aeo user,comm,pid,psr,pcpu,pri,ni,cputime,time --sort -rss | head -30";
 
 //mudar cpu processo
 void task_set(int pid,int cpu) {
@@ -44,8 +67,8 @@ int main(){
             cout<<"Operação inválida!\n";
             error!=error;
         }
-        cout<<"---------\n1-Pausar | 2-Continuar | 3-Parar | 4-Mudar Psr | 5-Mudar Pri | 6-Tree | 7 - Filtro | 8- %CPU \n 0-Exit\n";
-        cout<<"Digite sua escolha: ";
+        cout << BOLDRED << "---------\n1-Pausar | 2-Continuar | 3-Parar | 4-Mudar Psr | 5-Mudar Pri | 6-Tree | 7 - Filtro | 8- %CPU \n 0-Exit\n";
+        cout<<"Digite sua escolha: " << RESET;
         cin>>escolha;
         while(escolha>8 || escolha<0){
             cout<<"Operação inválida, digite novamente.\n";
@@ -59,7 +82,7 @@ int main(){
         
         switch(escolha){
             case 0:
-                cout << "Saindo..." << endl;s
+                cout << "Saindo..." << endl;
                 exit(1);
                 break;
             case 1:
@@ -131,10 +154,9 @@ int main(){
 
                 int total[nCores] = {0,0,0,0};
                 int idle[nCores] = {0,0,0,0};
-                int percent[nCores] = {0,0,0,0};
                 
                 int nLine = 0;
-                
+                float percent;
                 //prepara os tokens para serem identificados
                 for (int i = 0; i < nCores; i++){
                     tokenToSearch[i] = "cpu" + to_string(i);
@@ -144,7 +166,7 @@ int main(){
                 while(getline(infile, line)){
                     istringstream iss(line);
                     //passa o stream para um vetor de strings
-                    if(!(iss >> lines[nLine])){break;}
+                    if(!(iss >> lines[nLine])){iss.clear();break;}
                     
                     //stream para pegar as informações da linha
                     stringstream rightLine(line);
@@ -155,26 +177,50 @@ int main(){
                     for(int i = 0; i < nCores; i++){
                         if(token == tokenToSearch[i]){ 
                             //se o cabeçalho for o procurado pega o stream da linha toda 
-                            for(int j = 0; j < 11  && rightLine.good(); j++){
+                            for(int j = 0; j < 10  && rightLine.good(); j++){
                             //11 itens onde o primeiro é o cabeçalho
                                 rightLine >> item[j];
-                                
+                                if(j == 0) cout << item[j] << endl;
                                 //soma os tempos totais
                                 if(j != 0){
                                     total[i] += stoi(item[j]);
                                 }
                                 //soma o tempo que o core ficou de boas
                                 if(j == 4){
-                                    idle[i] += stoi(item[j]);
+                                    idle[i] = stoi(item[j]);
                                 }
                             }
                         }
-                    }   
-                    /* SEGMENTATION FAULT AQUI (Não sei porque)*/ 
-                    cout << total[0] << endl;                                
+                    }      
                 }
-                system("read -p \"Pressione enter para sair\" saindo");
+                
+                cout << endl << "Gráfico de uso de CPU" << endl;
+                for(int i = 0; i < nCores; i++){
+                    percent = 100 - 100*(idle[i])/total[i];
+                    if(percent < 20){
+                        cout << GREEN;
+                    } else if (percent < 70) {
+                        cout << YELLOW;
+                    } else {
+                        cout << RED;
+                    }
+                    
+                    cout << "CPU" << i << " " <<  percent << "% [";
+                    //cout << (int) percent/10;
+                    for(int j = 0; j < (int) percent/10; j++){
+                        cout << "|";
+                    }
+                    for(int j = 0; j < 10 - (int) percent/10; j++){
+                        cout << " ";
+                    }
+                    cout << "]" << endl << RESET;
+                }   
+                cout << endl;                             
+                system("read -p \"Pressione enter para voltar\" saindo");
+                infile.clear();
+                
                 break;
+                
             }
             default:
                 cout<<"Escolha invalida\n";
