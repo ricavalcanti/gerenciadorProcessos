@@ -10,13 +10,15 @@
 #include <cstdlib>
 #include <curses.h>
 #include <math.h> 
-
+//#include <features.h>
+#define _GNU_SOURCE             /* See feature_test_macros(7) */
+#include <sched.h> 
+#include <termio.h>
+#include <unistd.h>
 #include <fstream>
 #include <sstream>
 using namespace std;
 
-#include <termio.h>
-#include <unistd.h>
 
 //the following are UBUNTU/LINUX ONLY terminal color codes.
 #define RESET   "\033[0m"
@@ -38,20 +40,26 @@ using namespace std;
 #define BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
 
 //listar processos ordenados pelo resident set size, the non-swapped physical memory that
-string listPCommand = "ps -aeo user,comm,pid,psr,pcpu,pri,ni,cputime,time --sort -rss | head -30";
+string listPCommand = "ps -aeo user,comm,pid,psr,pcpu,pri,ni,cputime --sort -rss | head -30";
 
 //mudar cpu processo
 void task_set(int pid,int cpu) {
-        int result;
-        cpu_set_t mask;
-        CPU_ZERO(&mask);
-        CPU_SET(cpu, &mask);
-        if((sched_setaffinity(pid, sizeof(mask), &mask)) == 0){
-            cout<<"Done\n";
-            system("clear");
-        }else{
-            cout<<"Error\n";
-        }
+        //int result;
+    cpu_set_t mask;
+    CPU_ZERO(&mask);
+    CPU_SET(cpu, &mask);
+    if((sched_setaffinity(pid, sizeof(mask), &mask)) == 0){
+        cout<<"Done\n";
+        sleep(2);
+        system("clear");
+        //sleep(1);
+    }else{
+        cout<<"Error\n";
+        //sleep(1);
+    }
+        /*char comand[40];
+        sprintf(comand, "taskset -cp %d %d", cpu, pid);
+        system(comand);*/
 }
 
 
@@ -81,16 +89,13 @@ int main(){
         }
         
         switch(escolha){
-            case 0:
-                cout << "Saindo..." << endl;
-                exit(1);
-                break;
             case 1:
                 if(!(kill(pidShot,SIGSTOP))){
-                    cout<<"Parei! \n";
+                    cout<<"Pausei! \n";
                 }else{
                     cout<<"Operacao invalida\n";
                 }
+                sleep(1);
                 break;
             case 2:
                 if(!(kill(pidShot,SIGCONT))){
@@ -98,6 +103,7 @@ int main(){
                 }else{
                     cout<<"Operacao invalida\n";
                 }
+                sleep(1);
                 break;
             case 3:
                 if(!(kill(pidShot,SIGKILL))){
@@ -105,23 +111,21 @@ int main(){
                 }else{
                     cout<<"Operacao invalida\n";
                 }
+                sleep(1);
                 break;
             case 4: 
                 cout<<"Digite a nova CPU: ";
                 cin>>newCpu;
-                while(newCpu>3 || newCpu<0){ //meu pc
-                    cout<<"CPU invalida, digite novamente\n";
-                    cin>>newCpu;
-                }
                 //testar se é valida "nproc --all"
                 task_set(pidShot,newCpu);
                 break;
             case 5:
-                cout<<"Digite o novo valor Nice (inv. prop. à prioridade): ";
+                cout<<"Digite o novo valor Nice: ";
                 cin>>newPrio;
                 if(setpriority(PRIO_PROCESS, pidShot, newPrio) == -1){
                     cout<<"Erro ao setar prioridade, super user?\n";
                 }
+                sleep(1);
                 break;
             
             case 6:
@@ -223,10 +227,11 @@ int main(){
                 
             }
             default:
-                cout<<"Escolha invalida\n";
                 error!=error;
                 break;
         }
-    }while(1);
+    }while(escolha!=0);
+    cout << "Saindo..." << endl;
+    exit(1);
 }
         
