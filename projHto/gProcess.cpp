@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include <fstream>
 #include <sstream>
+
 using namespace std;
 
 
@@ -146,7 +147,6 @@ int main(){
             
             case 8: 
             { //precisa dessas chaves para especificação de escopo das variáveis desse caso
-                ifstream infile("/proc/stat");
                 const int nCores = 4; //Deixar nCores estático enquanto não descobrir um jeito de indentificar quantos cores existem
                 string line;
                 string lines[30];
@@ -158,15 +158,16 @@ int main(){
 
                 int total[nCores] = {0,0,0,0};
                 int idle[nCores] = {0,0,0,0};
-                
+                int prevIdle[nCores] = {0,0,0,0};
+                int prevTotal[nCores] = {0,0,0,0};
+                int diffTotal[nCores] = {0,0,0,0};
+                int diffIdle[nCores] = {0,0,0,0};
                 int nLine = 0;
                 float percent;
-                //prepara os tokens para serem identificados
-                for (int i = 0; i < nCores; i++){
-                    tokenToSearch[i] = "cpu" + to_string(i);
-                }
-                
-                //le linha a linha o arquivo
+               
+                system("sar -P 1 1 > cpuUsage");
+                ifstream infile("cpuUsage");
+
                 while(getline(infile, line)){
                     istringstream iss(line);
                     //passa o stream para um vetor de strings
@@ -177,57 +178,17 @@ int main(){
                     
                     //checa o cabeçalho da linha
                     token = lines[nLine].substr(0, lines[nLine].find(splitChar));
+
+                    cout << endl << token << endl;
+
+                    system("read -p \"Pressione enter para voltar\" saindo");
+                    infile.clear();
                     
-                    for(int i = 0; i < nCores; i++){
-                        if(token == tokenToSearch[i]){ 
-                            //se o cabeçalho for o procurado pega o stream da linha toda 
-                            for(int j = 0; j < 10  && rightLine.good(); j++){
-                            //11 itens onde o primeiro é o cabeçalho
-                                rightLine >> item[j];
-                                if(j == 0) cout << item[j] << endl;
-                                //soma os tempos totais
-                                if(j != 0){
-                                    total[i] += stoi(item[j]);
-                                }
-                                //soma o tempo que o core ficou de boas
-                                if(j == 4){
-                                    idle[i] = stoi(item[j]);
-                                }
-                            }
-                        }
-                    }      
+                    break;
                 }
-                
-                cout << endl << "Gráfico de uso de CPU" << endl;
-                for(int i = 0; i < nCores; i++){
-                    percent = 100 - 100*(idle[i])/total[i];
-                    if(percent < 20){
-                        cout << GREEN;
-                    } else if (percent < 70) {
-                        cout << YELLOW;
-                    } else {
-                        cout << RED;
-                    }
-                    
-                    cout << "CPU" << i << " " <<  percent << "% [";
-                    //cout << (int) percent/10;
-                    for(int j = 0; j < (int) percent/10; j++){
-                        cout << "|";
-                    }
-                    for(int j = 0; j < 10 - (int) percent/10; j++){
-                        cout << " ";
-                    }
-                    cout << "]" << endl << RESET;
-                }   
-                cout << endl;                             
-                system("read -p \"Pressione enter para voltar\" saindo");
-                infile.clear();
-                
-                break;
-                
             }
             default:
-                error!=error;
+                //error!=error;
                 break;
         }
     }while(escolha!=0);

@@ -1,0 +1,7 @@
+Linux 4.15.0-36-generic (iran-300E5M-300E5L) 	22/10/2018 	_x86_64_	(4 CPU)
+
+23:16:01        CPU     %user     %nice   %system   %iowait    %steal     %idle
+23:16:02          1      7,00      0,00      3,00      0,00      0,00     90,00
+
+
+Average:          1      7,00      0,00      3,00      0,00      0,00     90,00
