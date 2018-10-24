@@ -77,7 +77,7 @@ int main(){
             error!=error;
         }
         cout << BOLDRED << "---------\n1-Pausar | 2-Continuar | 3-Parar | 4-Mudar Psr | 5-Mudar Pri | 6-Tree | 7 - Filtro | 8- %CPU \n 0-Exit\n";
-        cout<<"Digite sua escolha: " << RESET;
+        cout<< "Digite sua escolha: " << RESET;
         cin>>escolha;
         while(escolha>8 || escolha<0){
             cout<<"Operação inválida, digite novamente.\n";
@@ -148,47 +148,52 @@ int main(){
             case 8: 
             { //precisa dessas chaves para especificação de escopo das variáveis desse caso
                 const int nCores = 4; //Deixar nCores estático enquanto não descobrir um jeito de indentificar quantos cores existem
-                string line;
-                string lines[30];
-                string tokenToSearch[nCores];
-                
-                string splitChar = " ";
-                string token;
-                string item[10];
-
-                int total[nCores] = {0,0,0,0};
-                int idle[nCores] = {0,0,0,0};
-                int prevIdle[nCores] = {0,0,0,0};
-                int prevTotal[nCores] = {0,0,0,0};
-                int diffTotal[nCores] = {0,0,0,0};
-                int diffIdle[nCores] = {0,0,0,0};
+                char line[1024]={};
+                int c = 0;
                 int nLine = 0;
-                float percent;
-               
-                system("sar -P 1 1 > cpuUsage");
-                ifstream infile("cpuUsage");
-
-                while(getline(infile, line)){
-                    istringstream iss(line);
-                    //passa o stream para um vetor de strings
-                    if(!(iss >> lines[nLine])){iss.clear();break;}
+                FILE *file;
+                int idle[4];
+                double idleValues[4];
+                int percent;
+                system("sar -P ALL 1 1 > cpuUsage");
+                file = fopen("cpuUsage", "r");
+                
+                /* https://stackoverflow.com/questions/20268385/c-programming-getting-the-last-line-of-file */
+                
+                if(file){
+                    while(fgets(line, 1024, file) != NULL){
+                        nLine++;
+                        if(nLine > 4 && nLine <= 8){
+                            /*Gambiarra*/ idle[nLine-5] = ((int) line[74] - '0')*10 + ((int) line[75] - '0');
+                        }
+                    }
                     
-                    //stream para pegar as informações da linha
-                    stringstream rightLine(line);
                     
-                    //checa o cabeçalho da linha
-                    token = lines[nLine].substr(0, lines[nLine].find(splitChar));
-
-                    cout << endl << token << endl;
-
-                    system("read -p \"Pressione enter para voltar\" saindo");
-                    infile.clear();
-                    
+                    for(int i = 0; i < nCores; i++){
+                        percent = 100 - idle[i];
+                        
+                        if(percent < 20){cout << GREEN;}
+                        else if (percent < 70) {cout << YELLOW;}
+                        else {cout << RED;}
+                        
+                        cout << "CPU" << i << " " <<  percent << "% [";
+                        
+                        for(int j = 0; j < (int) percent/10; j++){
+                            cout << "|";
+                        }
+                        for(int j = 0; j < 10 - (int) percent/10; j++){
+                            cout << " ";
+                        }
+                        
+                        cout << "]" << endl;
+                    }
+                    cout << endl; 
+                    system("read -p \"Pressione enter para sair\" saindo");
                     break;
                 }
             }
             default:
-                //error!=error;
+                error!=error;
                 break;
         }
     }while(escolha!=0);
