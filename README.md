@@ -1,4 +1,6 @@
-## Gerenciador de Processos para Linux 
+# QtProcessManager
+<p> Here contains a little project as an update from a work done in Real Time Systems at Universidade Federal do Rio Grande do Norte in Computer Engineering Course. This update consists in add a GUI to the user done in QtCreator.  </p>
 
-### Descrição
-Esse é um gerenciador de processos para distribuições Linux feito em C++ para a disciplina de Sistemas em Tempo Real. Têm-se como base o clássico [top](http://man7.org/linux/man-pages/man1/top.1.html) ja presente no sistema e o [htop](https://github.com/hishamhm/htop)
+<footer> Any doubts, hints or comments or contribuitions are welcolme! </footer>
+
+<p> The original project is in oldVersion folder. Made by me (@IranNeto) and @ricavalcanti. </p>
